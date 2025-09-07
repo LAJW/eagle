@@ -78,13 +78,22 @@ public class AccountController {
 
     @GetMapping("/{accountNumber}")
     public ResponseEntity<?> fetchAccountByAccountNumber(@PathVariable String accountNumber, HttpServletRequest request) {
-        Account account = getAccountOrThrow(accountNumber, request);
-        return ResponseEntity.ok(toResponse(account));
+        try {
+            Account account = getAccountOrThrow(accountNumber, request);
+            return ResponseEntity.ok(toResponse(account));
+        } catch (ResponseStatusException e) {
+            return ResponseEntity.status(e.getStatusCode()).body(e.getReason());
+        }
     }
 
     @PatchMapping("/{accountNumber}")
     public ResponseEntity<?> updateAccountByAccountNumber(@PathVariable String accountNumber, @RequestBody UpdateBankAccountRequest requestBody, HttpServletRequest request) {
-        Account account = getAccountOrThrow(accountNumber, request);
+        Account account;
+        try {
+            account = getAccountOrThrow(accountNumber, request);
+        } catch (ResponseStatusException e) {
+            return ResponseEntity.status(e.getStatusCode()).body(e.getReason());
+        }
         if (requestBody.name() != null) account.setName(requestBody.name());
         if (requestBody.accountType() != null) account.setAccountType(requestBody.accountType());
         account.setUpdatedTimestamp(LocalDateTime.now());

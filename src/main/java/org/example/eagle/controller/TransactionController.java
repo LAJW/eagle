@@ -50,20 +50,25 @@ public class TransactionController {
     @Transactional
     @PostMapping
     public ResponseEntity<?> createTransaction(@PathVariable String accountNumber, @RequestBody CreateTransactionRequest requestBody, HttpServletRequest request) {
-        Account account = getAccountOrThrow(accountNumber, request);
+        Account account;
+        try {
+            account = getAccountOrThrow(accountNumber, request);
+        } catch (ResponseStatusException e) {
+            return ResponseEntity.status(e.getStatusCode()).body(e.getReason());
+        }
         if (!"GBP".equals(requestBody.currency())) {
-            throw new ResponseStatusException(org.springframework.http.HttpStatus.BAD_REQUEST, "Only GBP currency is supported");
+            return ResponseEntity.status(org.springframework.http.HttpStatus.BAD_REQUEST).body("Only GBP currency is supported");
         }
         if (requestBody.amount() <= 0 || requestBody.amount() > 10000.00) {
-            throw new ResponseStatusException(org.springframework.http.HttpStatus.BAD_REQUEST, "Amount must be between 0.01 and 10000.00");
+            return ResponseEntity.status(org.springframework.http.HttpStatus.BAD_REQUEST).body("Amount must be between 0.01 and 10000.00");
         }
         if (!"deposit".equals(requestBody.type()) && !"withdrawal".equals(requestBody.type())) {
-            throw new ResponseStatusException(org.springframework.http.HttpStatus.BAD_REQUEST, "Type must be deposit or withdrawal");
+            return ResponseEntity.status(org.springframework.http.HttpStatus.BAD_REQUEST).body("Type must be deposit or withdrawal");
         }
         if ("withdrawal".equals(requestBody.type())) {
             double newBalance = account.getBalance() - requestBody.amount();
             if (newBalance <= 0) {
-                throw new ResponseStatusException(org.springframework.http.HttpStatus.UNPROCESSABLE_ENTITY, "Insufficient funds to process transaction");
+                return ResponseEntity.status(org.springframework.http.HttpStatus.UNPROCESSABLE_ENTITY).body("Insufficient funds to process transaction");
             }
         }
         // Create transaction
@@ -88,7 +93,12 @@ public class TransactionController {
 
     @GetMapping
     public ResponseEntity<ListTransactionsResponse> listTransactions(@PathVariable String accountNumber, HttpServletRequest request) {
-        Account account = getAccountOrThrow(accountNumber, request);
+        Account account;
+        try {
+            account = getAccountOrThrow(accountNumber, request);
+        } catch (ResponseStatusException e) {
+            return ResponseEntity.status(e.getStatusCode()).body(null);
+        }
         List<Transaction> transactions = transactionRepository.findByAccount_AccountNumber(account.getAccountNumber());
         List<TransactionResponse> responses = transactions.stream().map(this::toResponse).collect(Collectors.toList());
         return ResponseEntity.ok(new ListTransactionsResponse(responses));
@@ -96,7 +106,12 @@ public class TransactionController {
 
     @GetMapping("/{transactionId}")
     public ResponseEntity<?> fetchTransactionById(@PathVariable String accountNumber, @PathVariable long transactionId, HttpServletRequest request) {
-        Account account = getAccountOrThrow(accountNumber, request);
+        Account account;
+        try {
+            account = getAccountOrThrow(accountNumber, request);
+        } catch (ResponseStatusException e) {
+            return ResponseEntity.status(e.getStatusCode()).body(e.getReason());
+        }
         Transaction transaction = transactionRepository.findByIdAndAccount_AccountNumber(transactionId, account.getAccountNumber());
         if (transaction == null) {
             throw new ResponseStatusException(org.springframework.http.HttpStatus.NOT_FOUND, "Transaction not found");
