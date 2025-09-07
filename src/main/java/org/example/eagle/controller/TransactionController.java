@@ -60,8 +60,11 @@ public class TransactionController {
         if (!"deposit".equals(requestBody.type()) && !"withdrawal".equals(requestBody.type())) {
             throw new ResponseStatusException(org.springframework.http.HttpStatus.BAD_REQUEST, "Type must be deposit or withdrawal");
         }
-        if ("withdrawal".equals(requestBody.type()) && account.getBalance() < requestBody.amount()) {
-            throw new ResponseStatusException(org.springframework.http.HttpStatus.UNPROCESSABLE_ENTITY, "Insufficient funds to process transaction");
+        if ("withdrawal".equals(requestBody.type())) {
+            double newBalance = account.getBalance() - requestBody.amount();
+            if (newBalance <= 0) {
+                throw new ResponseStatusException(org.springframework.http.HttpStatus.UNPROCESSABLE_ENTITY, "Insufficient funds to process transaction");
+            }
         }
         // Create transaction
         Transaction transaction = new Transaction();
