@@ -617,6 +617,37 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/ErrorResponse"
+  /v1/login:
+    post:
+      tags:
+        - user
+      description: Login and receive a JWT
+      operationId: login
+      requestBody:
+        description: Login with email and password
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+        required: true
+      responses:
+        '200':
+          description: Successful login
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoginResponse'
+        '401':
+          description: Invalid credentials
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+                    example: Invalid credentials
+
 components:
   schemas:
     CreateBankAccountRequest:
@@ -783,6 +814,7 @@ components:
         - address
         - phoneNumber
         - email
+        - password
       properties:
         name:
           type: string
@@ -813,7 +845,11 @@ components:
           format: ^\+[1-9]\d{1,14}$
         email:
           type: string
-          format: email    
+          format: email
+        password:
+          type: string
+          format: password
+          example: password
     UpdateUserRequest:
       type: object
       properties:
@@ -927,6 +963,28 @@ components:
                 type: string
               type:
                 type: string
+    LoginRequest:
+      type: object
+      properties:
+        email:
+          type: string
+          example: user@example.com
+        password:
+          type: string
+          example: password
+      required:
+        - email
+        - password
+    LoginResponse:
+      type: object
+      properties:
+        jwt:
+          type: string
+          example: eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIxIiwiaWF0IjoxNzU3Mjc5MzQ0fQ.iWQI6wKhM2VcHv29drUs859uWJ-m3SwRy3DPiRw0zOk
+        error:
+          type: string
+          nullable: true
+          example: null
   securitySchemes:
     bearerAuth:
       type: http

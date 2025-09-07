@@ -1,8 +1,12 @@
 package org.example.eagle.entity;
 
+import io.hypersistence.utils.hibernate.type.json.JsonBinaryType;
 import jakarta.persistence.*;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.annotations.Type;
+import org.hibernate.type.SqlTypes;
 
 @Entity
 @Table(name = "users")
@@ -12,7 +16,7 @@ public class User {
     private Long id;
 
     @Column(nullable = false, unique = true)
-    private String username;
+    private String email;
 
     @Column(nullable = false)
     private String salt;
@@ -20,13 +24,21 @@ public class User {
     @Column(nullable = false)
     private String hash;
 
-    @Column(columnDefinition = "jsonb")
+    @Type(JsonBinaryType.class)
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(name = "address", columnDefinition = "jsonb")
     private String addressJson;
+
+    @Column(nullable = false)
+    private String name;
+
+    @Column(nullable = true)
+    private String phoneNumber;
 
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
-    public String getUsername() { return username; }
-    public void setUsername(String username) { this.username = username; }
+    public String getEmail() { return email; }
+    public void setEmail(String username) { this.email = username; }
     public String getSalt() { return salt; }
     public void setSalt(String salt) { this.salt = salt; }
     public String getHash() { return hash; }
@@ -51,6 +63,12 @@ public class User {
 
     public String getAddressJson() { return addressJson; }
     public void setAddressJson(String addressJson) { this.addressJson = addressJson; }
+
+    public String getName() { return name; }
+    public void setName(String name) { this.name = name; }
+
+    public String getPhoneNumber() { return phoneNumber; }
+    public void setPhoneNumber(String phoneNumber) { this.phoneNumber = phoneNumber; }
 
     @Embeddable
     public static class Address {

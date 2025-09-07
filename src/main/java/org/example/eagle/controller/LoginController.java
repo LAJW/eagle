@@ -23,7 +23,7 @@ public class LoginController {
 
     @PostMapping
     public ResponseEntity<LoginResponse> login(@RequestBody LoginRequest request) {
-        var user = userRepository.findByUsername(request.username());
+        var user = userRepository.findByEmail(request.email());
         if (user.isEmpty() || !authService.verifyPassword(request.password(), user.get().getSalt(), user.get().getHash())) {
             return ResponseEntity.status(401).body(new LoginResponse(null, "Invalid credentials"));
         }

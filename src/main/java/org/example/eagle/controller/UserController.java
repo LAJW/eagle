@@ -21,14 +21,36 @@ public class UserController {
         this.auth = auth;
     }
 
+    private org.example.eagle.dto.UserResponse toResponse(User user) {
+        return new org.example.eagle.dto.UserResponse(
+            user.getName(),
+            user.getAddress() == null ? null : new org.example.eagle.dto.AddressDTO(
+                user.getAddress().getLine1(),
+                user.getAddress().getLine2(),
+                user.getAddress().getLine3(),
+                user.getAddress().getTown(),
+                user.getAddress().getCounty(),
+                user.getAddress().getPostcode()
+            ),
+            user.getPhoneNumber(),
+            user.getEmail()
+        );
+    }
+
     @PostMapping
     public ResponseEntity<?> createUser(@RequestBody CreateOrUpdateUserRequest request) {
+        if (request.email() == null || request.password() == null || request.name() == null ||
+            request.address() == null || request.address().line1() == null) {
+            return ResponseEntity.status(400).body("Missing required fields: email, password, name, and address line1 must not be null");
+        }
         User user = new User();
-        user.setUsername(request.email());
+        user.setEmail(request.email());
         String salt = auth.generateSalt();
         user.setSalt(salt);
         String hash = auth.hashPassword(request.password(), salt);
         user.setHash(hash);
+        user.setName(request.name());
+        user.setPhoneNumber(request.phoneNumber());
         user.setAddress(new Address(
                 request.address().line1(),
                 request.address().line2(),
@@ -38,7 +60,8 @@ public class UserController {
                 request.address().postcode()
         ));
         userRepository.save(user);
-        return ResponseEntity.status(201).body(user);
+        var userResponse = toResponse(user);
+        return ResponseEntity.status(201).body(userResponse);
     }
 
     @GetMapping("/{userId}")
@@ -51,7 +74,8 @@ public class UserController {
         if (user.isEmpty()) {
             return ResponseEntity.status(404).body("User not found");
         }
-        return ResponseEntity.ok(user.get());
+        var userResponse = toResponse(user.get());
+        return ResponseEntity.ok(userResponse);
     }
 
     @PatchMapping("/{userId}")
@@ -61,7 +85,8 @@ public class UserController {
             return ResponseEntity.status(404).body("User not found");
         }
         var user = maybeUser.get();
-        if (request.name() != null) user.setUsername(request.name());
+        if (request.name() != null) user.setEmail(request.name());
+        if (request.phoneNumber() != null) user.setPhoneNumber(request.phoneNumber());
         if (request.address() != null) {
             user.setAddress(new Address(
                     request.address().line1(),
@@ -73,7 +98,8 @@ public class UserController {
             ));
         }
         userRepository.save(user);
-        return ResponseEntity.ok(user);
+        var userResponse = toResponse(user);
+        return ResponseEntity.ok(userResponse);
     }
 
     @DeleteMapping("/{userId}")
