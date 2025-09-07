@@ -1,0 +1,10 @@
+# Simple docker compose starting a PSQL database with default settings
+services:
+  db:
+    image: postgres:latest
+    environment:
+      POSTGRES_USER: eagleuser
+      POSTGRES_PASSWORD: eaglepass
+      POSTGRES_DB: eagle
+    ports:
+      - "5432:5432"
